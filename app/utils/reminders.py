@@ -27,8 +27,8 @@ async def schedule_reminders(
             session = await ParkingSession.get(session_id)
             if not session or session.status != ParkingSessionStatus.ACTIVE:
                 break
-            car = Car.get(session.car_id)
-            parking_location = ParkingLocation.get(session.parking_location_id)
+            car = await Car.get(session.car_id)
+            parking_location = await ParkingLocation.get(session.parking_location_id)
 
             if not car or not parking_location:
                 continue
