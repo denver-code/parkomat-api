@@ -20,6 +20,7 @@ from app.core.password_utils import (
     get_password_hash,
     verify_password,
 )
+from app.utils.flags import signup_enabled
 from models.models import OTPActivationModel, PasswordResetToken, User
 
 
@@ -110,7 +111,9 @@ Ihor Savenko | Parkomat Security System
 
 @auth_router.post("/signup", response_model=UserOut)
 async def signup_event(
-    payload: AuthSchema, background_tasks: BackgroundTasks
+    payload: AuthSchema,
+    background_tasks: BackgroundTasks,
+    _=Depends(signup_enabled),
 ) -> UserOut:
     if await User.find_one({"email": payload.email}):
         raise HTTPException(status_code=400, detail="Email already registered")

@@ -21,9 +21,12 @@ dependencies = [
     "argon2-cffi (>=25.1.0,<26.0.0)",
     "pillow (>=12.1.0,<13.0.0)",
     "python-multipart (>=0.0.22,<0.0.23)",
-    "httpx (>=0.28.1,<0.29.0)"
+    "httpx (>=0.28.1,<0.29.0)",
+    "flagsmith (>=5.1.1,<6.0.0)"
 ]
 
+[tool.poetry]
+package-mode = false
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

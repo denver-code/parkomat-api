@@ -12,15 +12,6 @@ async def send_email(
     body: str,
     sender: Optional[str] = None,
 ):
-    print(
-        [
-            config.SMTP_HOST,
-            config.SMTP_PORT,
-            config.SMTP_USER,
-            config.SMTP_PASSWORD,
-            config.SMTP_SENDER,
-        ]
-    )
     if not all(
         [
             config.SMTP_HOST,

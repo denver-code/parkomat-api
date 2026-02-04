@@ -24,6 +24,7 @@ class Config(BaseSettings):
     SENTRY_ENVIRONMENT: Optional[str] = None
 
     METRICS_TOKEN: Optional[str] = None
+    FLAGSMITH_TOKEN: Optional[str] = None
 
     JWT_SECRET_KEY: str
     PASSWORDS_SALT_SECRET_KEY: str
