@@ -102,7 +102,7 @@ async def health():
 
 app.include_router(api_router)
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 import httpx
 
@@ -126,7 +126,7 @@ async def schedule_reminders(
     intervals = [20, 10, 0]  # Minutes remaining
 
     for minutes_left in intervals:
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         # Calculate how long to sleep until this specific reminder
         trigger_time = end_time - timedelta(minutes=minutes_left)
         delay = (trigger_time - now).total_seconds()
