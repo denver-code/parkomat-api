@@ -13,6 +13,7 @@ from api.router import router as api_router
 from app.core.config import config
 from app.core.database import db
 from app.utils.redis import init_redis
+from app.utils.redis import manager as redis_manager
 from app.utils.reminders import schedule_reminders
 from app.utils.telegram import send_telegram_msg
 from models.models import (
@@ -96,9 +97,23 @@ def get_application():
 app = get_application()
 
 
-@app.get("/")
+@app.get("/health")
 async def health():
-    return {"status": "ok"}
+    health_status = {
+        "status": "ok",
+        "database": "connected",
+        "cache": "disconnected",
+    }
+    try:
+        if redis_manager.client and await redis_manager.client.ping():
+            health_status["cache"] = "connected"
+        else:
+            health_status["status"] = "error"
+    except Exception as e:
+        health_status["status"] = "error"
+        health_status["cache"] = f"error: {str(e)}"
+
+    return health_status
 
 
 app.include_router(api_router)

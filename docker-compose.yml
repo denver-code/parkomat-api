@@ -1,4 +1,15 @@
 services:
+  redis:
+    image: redis:7-alpine
+    restart: always
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
   api:
     build:
       context: ./
@@ -34,17 +45,6 @@ services:
       FLAGSMITH_TOKEN: ${FLAGSMITH_TOKEN}
       REDIS_HOST: ${REDIS_HOST}
       REDIS_PORT: ${REDIS_PORT}
-
-  redis:
-    image: redis:7-alpine
-    restart: always
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
 
 volumes:
   api_data:
