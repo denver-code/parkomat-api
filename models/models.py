@@ -2,11 +2,10 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
-from uuid import uuid4
+from typing import Optional
 
-from beanie import Document, Indexed, Link, PydanticObjectId
-from pydantic import BaseModel, EmailStr, Field, validator
+from beanie import Document, PydanticObjectId
+from pydantic import BaseModel, Field
 
 
 class User(Document):
@@ -112,6 +111,8 @@ class ParkingSession(Document):
     # Calculated automatically based on the parking location's fee classification and max stay
     end_time: datetime
     status: ParkingSessionStatus = ParkingSessionStatus.ACTIVE
+
+    created_at: datetime = Field(default_factory=datetime.utcnow)
 
     class Settings:
         name = "parking_session"
