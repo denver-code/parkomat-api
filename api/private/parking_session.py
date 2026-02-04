@@ -1,6 +1,6 @@
 import asyncio
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, time, timedelta, timezone
 from io import BytesIO
 from typing import Optional
 
@@ -99,7 +99,6 @@ async def create_parking_session(
         await session.delete()
         raise HTTPException(status_code=400, detail="Failed to process proof photo")
 
-    # 5. Return clean response
     return {
         "session_id": str(session.id),
         "car_plate": car.license_plate,
@@ -109,17 +108,36 @@ async def create_parking_session(
     }
 
 
-@session_router.get("/active")
-async def get_active_session(user=Depends(FastJWT().login_required)):
-    """Returns the current active session for the user if it exists"""
-    session = await ParkingSession.find_one(
-        ParkingSession.user_id == user.id,
-        ParkingSession.status == ParkingSessionStatus.ACTIVE,
-    )
-    if not session:
-        return {"active": False}
+@session_router.get("")
+async def get_sessions(
+    status: Optional[str] = None,
+    car_reg: Optional[str] = None,
+    date: Optional[datetime] = None,
+    user=Depends(FastJWT().login_required),
+):
+    query_filter = {"user_id": user.id}
 
-    return {"active": True, "session": session}
+    if car_reg:
+        car = await Car.find_one(
+            Car.user_id == user.id, Car.license_plate == car_reg.upper()
+        )
+        if not car:
+            return []
+        query_filter["car_id"] = car.id
+
+    query = ParkingSession.find(query_filter)
+
+    if status:
+        query = query.find(ParkingSession.status == status)
+    if date:
+        start_of_day = datetime.combine(date, time.min)
+        end_of_day = datetime.combine(date, time.max)
+        query = query.find(
+            ParkingSession.start_time >= start_of_day,
+            ParkingSession.start_time <= end_of_day,
+        )
+
+    return await query.to_list()
 
 
 @session_router.post("/{session_id}/complete")
