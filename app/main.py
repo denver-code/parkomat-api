@@ -17,7 +17,6 @@ from models.models import (
     OTPActivationModel,
     ParkingLocation,
     ParkingSession,
-    ParkingSessionStatus,
     PasswordResetToken,
     User,
     UserParkingLocation,
