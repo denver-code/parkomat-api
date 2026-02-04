@@ -4,7 +4,15 @@ from io import BytesIO
 from typing import Optional
 
 from beanie import PydanticObjectId
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    UploadFile,
+)
 from PIL import Image
 
 from app.core.jwt import FastJWT
@@ -17,6 +25,7 @@ SESSION_UPLOAD_DIR = "static/sessions"
 
 @session_router.post("")
 async def create_parking_session(
+    background_tasks: BackgroundTasks,
     car_id: str = Form(...),
     parking_location_id: Optional[str] = Form(None),
     manual_max_stay_mins: Optional[int] = Form(None),
@@ -64,6 +73,13 @@ async def create_parking_session(
         status=ParkingSessionStatus.ACTIVE,
     )
     await session.insert()
+
+    if user.telegram_chat_id:
+        from app.main import schedule_reminders
+
+        background_tasks.add_task(
+            schedule_reminders, user.telegram_chat_id, session.end_time, session.id
+        )
 
     # 4. Process Photo: user_id-session_id.jpg
     filename = f"{user.id}-{session.id}.jpg"

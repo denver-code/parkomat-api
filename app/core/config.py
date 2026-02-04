@@ -14,6 +14,8 @@ class Config(BaseSettings):
     DATABASE_NAME: str
     DATABASE_URL: str
 
+    TELEGRAM_BOT_TOKEN: str
+
     API_BASE_URL: str
     FRONTEND_URL: Optional[str] = None
 

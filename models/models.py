@@ -17,6 +17,8 @@ class User(Document):
         default_factory=lambda: NotificationSettings()
     )
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    telegram_chat_id: Optional[str] = None
+    connection_code: Optional[str] = None
 
     class Settings:
         name = "user"
@@ -113,3 +115,4 @@ class ParkingSession(Document):
 
     class Settings:
         name = "parking_session"
+        indexes = [[("car_location", "2dsphere")]]

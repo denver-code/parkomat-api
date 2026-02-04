@@ -1,10 +1,11 @@
+import asyncio
 import os
 from asyncio import run
 from contextlib import asynccontextmanager
-from datetime import time
+from datetime import time, timedelta
 
 import sentry_sdk
-from beanie import init_beanie
+from beanie import PydanticObjectId, init_beanie
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -21,6 +22,7 @@ from models.models import (
     OTPActivationModel,
     ParkingLocation,
     ParkingSession,
+    ParkingSessionStatus,
     PasswordResetToken,
     User,
     UserParkingLocation,
@@ -99,3 +101,85 @@ async def health():
 
 
 app.include_router(api_router)
+
+from datetime import datetime
+
+import httpx
+
+from app.core.config import config
+
+
+async def send_telegram_msg(chat_id: str, text: str):
+    url = f"https://api.telegram.org/bot{config.TELEGRAM_BOT_TOKEN}/sendMessage"
+    payload = {"chat_id": chat_id, "text": text, "parse_mode": "HTML"}
+    async with httpx.AsyncClient() as client:
+        await client.post(url, json=payload)
+
+
+async def schedule_reminders(
+    user_chat_id: str, end_time: datetime, session_id: PydanticObjectId
+):
+    """
+    This function lives in the background and waits for the specific
+    milestones (20m, 10m, 0m) to trigger Telegram alerts.
+    """
+    intervals = [20, 10, 0]  # Minutes remaining
+
+    for minutes_left in intervals:
+        now = datetime.utcnow()
+        # Calculate how long to sleep until this specific reminder
+        trigger_time = end_time - timedelta(minutes=minutes_left)
+        delay = (trigger_time - now).total_seconds()
+
+        if delay > 0:
+            await asyncio.sleep(delay)
+
+            # Verify the session is still ACTIVE (user didn't finish early)
+            session = await ParkingSession.get(session_id)
+            if not session or session.status != ParkingSessionStatus.ACTIVE:
+                break  # Stop reminders if they left the spot
+
+            # Send the message
+            msg = (
+                "🚨 <b>Expired!</b>"
+                if minutes_left == 0
+                else f"⚠️ <b>{minutes_left}m left!</b>"
+            )
+            await send_telegram_msg(user_chat_id, msg)
+
+            # If expired, update status in DB
+            if minutes_left == 0:
+                session.status = ParkingSessionStatus.COMPLETED
+                await session.save()
+
+
+@app.post("/telegram-webhook")
+async def telegram_webhook(update: dict):
+    # Standard safety checks for Telegram payload
+    if "message" not in update or "text" not in update["message"]:
+        return {"ok": True}
+
+    text = update["message"]["text"].strip().upper()
+    chat_id = update["message"]["chat"]["id"]
+
+    if text.startswith("CONNECT_"):
+        # Find the user with this specific code
+        user = await User.find_one(User.connection_code == text)
+
+        if user:
+            # Success! Link the account
+            user.telegram_chat_id = str(chat_id)
+            user.connection_code = None  # Burn the code immediately
+            await user.save()
+
+            await send_telegram_msg(
+                chat_id,
+                "<b>Success!</b> 🚗 Your account is now linked. "
+                "I will send your parking reminders here.",
+            )
+        else:
+            await send_telegram_msg(
+                chat_id, "❌ <b>Invalid Code.</b> Please check the app for a new code."
+            )
+
+    return {"ok": True}
