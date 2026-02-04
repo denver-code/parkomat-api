@@ -1,7 +1,6 @@
 import os
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
-from readline import backend
 from typing import Optional
 
 from beanie import PydanticObjectId
