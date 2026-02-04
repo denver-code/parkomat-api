@@ -1,3 +1,4 @@
+import asyncio
 import os
 from contextlib import asynccontextmanager
 
@@ -11,6 +12,8 @@ from sentry_sdk.integrations.starlette import StarletteIntegration
 from api.router import router as api_router
 from app.core.config import config
 from app.core.database import db
+from app.utils.redis import init_redis
+from app.utils.reminders import schedule_reminders
 from app.utils.telegram import send_telegram_msg
 from models.models import (
     Car,
@@ -44,6 +47,8 @@ def init_sentry() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    await init_redis()
+
     await init_beanie(
         database=db,
         document_models=[
@@ -56,6 +61,20 @@ async def lifespan(app: FastAPI):
             ParkingSession,
         ],
     )
+
+    active_sessions = await ParkingSession.find(
+        ParkingSession.status == "ACTIVE"
+    ).to_list()
+
+    for session in active_sessions:
+        user = await User.get(session.user_id)
+        if user and user.telegram_chat_id:
+            asyncio.create_task(
+                schedule_reminders(
+                    user.telegram_chat_id, session.end_time, str(session.id)
+                )
+            )
+            print(f"🚀 Recovered reminder task for session: {session.id}")
 
     yield
 

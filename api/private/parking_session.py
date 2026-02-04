@@ -1,3 +1,4 @@
+import asyncio
 import os
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
@@ -15,6 +16,7 @@ from fastapi import (
 )
 from PIL import Image
 
+from app.core.config import config
 from app.core.jwt import FastJWT
 from app.utils.telegram import send_telegram_msg
 from models.models import Car, ParkingLocation, ParkingSession, ParkingSessionStatus
@@ -35,12 +37,10 @@ async def create_parking_session(
     photo: UploadFile = File(...),
     user=Depends(FastJWT().login_required),
 ):
-    # 1. Validate the Car belongs to the user
     car = await Car.find_one(Car.id == PydanticObjectId(car_id), Car.user_id == user.id)
     if not car:
         raise HTTPException(status_code=404, detail="Car not found in your garage")
 
-    # 2. Determine End Time
     start_time = datetime.now(timezone.utc)
     calculated_end_time = None
 
@@ -49,11 +49,9 @@ async def create_parking_session(
         if not location:
             raise HTTPException(status_code=404, detail="Parking location not found")
 
-        # If location has a max_stay (in minutes), use it. Default to 24h if none.
         stay_duration = location.max_stay if location.max_stay else 1440
         calculated_end_time = start_time + timedelta(minutes=stay_duration)
     else:
-        # "Rush Mode" Logic
         if not manual_max_stay_mins:
             raise HTTPException(
                 status_code=400,
@@ -61,7 +59,6 @@ async def create_parking_session(
             )
         calculated_end_time = start_time + timedelta(minutes=manual_max_stay_mins)
 
-    # 3. Create Session Record (to get ID for filename)
     session = ParkingSession(
         user_id=user.id,
         car_id=car.id,
@@ -78,8 +75,8 @@ async def create_parking_session(
     if user.telegram_chat_id:
         from app.utils.reminders import schedule_reminders
 
-        background_tasks.add_task(
-            schedule_reminders, user.telegram_chat_id, session.end_time, session.id
+        asyncio.create_task(
+            schedule_reminders(user.telegram_chat_id, session.end_time, str(session.id))
         )
         parking_location = None
         if parking_location_id:
@@ -90,7 +87,6 @@ async def create_parking_session(
             f"Your parking session {f'at {parking_location.name} ' if parking_location else ''}for {car.license_plate} that lasts {manual_max_stay_mins} minutes has started.",
         )
 
-    # 4. Process Photo: user_id-session_id.jpg
     filename = f"{user.id}-{session.id}.jpg"
     file_path = os.path.join(SESSION_UPLOAD_DIR, filename)
 
@@ -108,7 +104,8 @@ async def create_parking_session(
         "session_id": str(session.id),
         "car_plate": car.license_plate,
         "ends_at": session.end_time,
-        "photo_url": f"/static/sessions/{filename}",
+        "photo_url": f"{config.API_BASE_URL}/api/static/sessions/{filename}",
+        "end_time": session.end_time,
     }
 
 

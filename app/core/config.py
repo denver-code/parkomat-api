@@ -19,6 +19,9 @@ class Config(BaseSettings):
     API_BASE_URL: str
     FRONTEND_URL: Optional[str] = None
 
+    REDIS_HOST: Optional[str] = "localhost"
+    REDIS_PORT: Optional[int] = 6379
+
     SENTRY_DSN: Optional[str] = None
     SENTRY_TRACES_SAMPLE_RATE: float = 0.0
     SENTRY_ENVIRONMENT: Optional[str] = None
