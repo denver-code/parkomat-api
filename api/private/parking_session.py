@@ -85,8 +85,7 @@ async def create_parking_session(
         if parking_location_id:
             parking_location = await ParkingLocation.get(parking_location_id)
 
-        background_tasks.add_task(
-            send_telegram_msg,
+        await send_telegram_msg(
             user.telegram_chat_id,
             f"Your parking session {f'at {parking_location.name} ' if parking_location else ''}for {car.license_plate} that lasts {manual_max_stay_mins} minutes has started.",
         )
