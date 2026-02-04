@@ -8,4 +8,4 @@ async def send_telegram_msg(chat_id: str, text: str):
     payload = {"chat_id": chat_id, "text": text, "parse_mode": "HTML"}
     async with httpx.AsyncClient() as client:
         r = await client.post(url, json=payload)
-        print(r)
+        print("response ", r)

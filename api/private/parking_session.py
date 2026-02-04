@@ -88,7 +88,7 @@ async def create_parking_session(
         background_tasks.add_task(
             send_telegram_msg,
             user.telegram_chat_id,
-            f"Your parking session {f'at {parking_location.name}' if parking_location else ''} for {car.license_plate} that lasts {manual_max_stay_mins} minutes has started.",
+            f"Your parking session {f'at {parking_location.name} ' if parking_location else ''}for {car.license_plate} that lasts {manual_max_stay_mins} minutes has started.",
         )
 
     # 4. Process Photo: user_id-session_id.jpg
