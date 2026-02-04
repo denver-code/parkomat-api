@@ -37,4 +37,3 @@ async def get_connection_code(user=Depends(FastJWT().login_required)):
     await user.save()
 
     return {"code": full_code}
-***REMOVED***
