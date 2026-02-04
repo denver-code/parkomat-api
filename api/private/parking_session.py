@@ -1,6 +1,7 @@
 import os
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
+from readline import backend
 from typing import Optional
 
 from beanie import PydanticObjectId
@@ -16,6 +17,7 @@ from fastapi import (
 from PIL import Image
 
 from app.core.jwt import FastJWT
+from app.utils.telegram import send_telegram_msg
 from models.models import Car, ParkingLocation, ParkingSession, ParkingSessionStatus
 
 session_router = APIRouter(prefix="/session", tags=["Parking Sessions"])
@@ -75,10 +77,19 @@ async def create_parking_session(
     await session.insert()
 
     if user.telegram_chat_id:
-        from app.main import schedule_reminders
+        from app.utils.reminders import schedule_reminders
 
         background_tasks.add_task(
             schedule_reminders, user.telegram_chat_id, session.end_time, session.id
+        )
+        parking_location = None
+        if parking_location_id:
+            parking_location = await ParkingLocation.get(parking_location_id)
+
+        background_tasks.add_task(
+            send_telegram_msg,
+            user.telegram_chat_id,
+            f"Your parking session {f'at {parking_location.name}' if parking_location else ''} for {car.license_plate} that lasts {manual_max_stay_mins} minutes has started.",
         )
 
     # 4. Process Photo: user_id-session_id.jpg

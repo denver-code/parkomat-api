@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 from beanie import PydanticObjectId
 
 from app.utils.telegram import send_telegram_msg
-from models.models import ParkingSession, ParkingSessionStatus
+from models.models import Car, ParkingLocation, ParkingSession, ParkingSessionStatus
 
 
 async def schedule_reminders(
@@ -27,11 +27,16 @@ async def schedule_reminders(
             session = await ParkingSession.get(session_id)
             if not session or session.status != ParkingSessionStatus.ACTIVE:
                 break
+            car = Car.get(session.car_id)
+            parking_location = ParkingLocation.get(session.parking_location_id)
+
+            if not car or not parking_location:
+                continue
 
             msg = (
-                "🚨 <b>Expired!</b>"
+                f"🚨Your parking of {car.license_plate} at {parking_location.name} has expired!"
                 if minutes_left == 0
-                else f"⚠️ <b>{minutes_left}m left!</b>"
+                else f"⚠️ <b>{minutes_left}m left!</b> at {parking_location.name} for your {car.license_plate} car!"
             )
             await send_telegram_msg(user_chat_id, msg)
 
