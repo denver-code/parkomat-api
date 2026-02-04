@@ -1,9 +1,7 @@
 import os
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
-
-from app.core.jwt import FastJWT
 
 static_router = APIRouter(prefix="/static", tags=["static"])
 

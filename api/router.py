@@ -1,7 +1,4 @@
-from re import A
-
-from fastapi import APIRouter, Depends, FastAPI, HTTPException
-from fastapi.routing import APIRoute
+from fastapi import APIRouter, Depends
 
 from api.private import private_router
 from api.public import public_router

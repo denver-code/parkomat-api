@@ -1,7 +1,7 @@
-from re import A
+import base64
+import os
 
-from fastapi import APIRouter, Depends, FastAPI, HTTPException
-from fastapi.routing import APIRoute
+from fastapi import APIRouter, Depends
 
 from api.private.car import car_router
 from api.private.parking_location import parking_router
@@ -19,10 +19,6 @@ async def root():
 private_router.include_router(car_router)
 private_router.include_router(parking_router)
 private_router.include_router(session_router)
-
-
-import base64
-import os
 
 
 @private_router.post("/telegram/request-code")
