@@ -1,45 +1,34 @@
-# Use an official Python runtime as a parent image
-FROM python:3.11-slim as python-base
+FROM python:3.11-slim
 
-# https://python-poetry.org/docs#ci-recommendations
-ENV POETRY_VERSION=1.4.2
-ENV POETRY_HOME=/opt/poetry
-ENV POETRY_VENV=/opt/poetry-venv
+# System dependencies for Pillow and building C extensions
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libjpeg-dev \
+    zlib1g-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
-# Tell Poetry where to place its cache and virtual environment
-ENV POETRY_CACHE_DIR=/opt/.cache
+# Install Poetry 2.0+
+ENV POETRY_HOME="/opt/poetry" \
+    POETRY_VERSION=2.0.1 \
+    POETRY_VIRTUALENVS_CREATE=false \
+    POETRY_NO_INTERACTION=1
 
-# Create stage for Poetry installation
-FROM python-base as poetry-base
+RUN curl -sSL https://install.python-poetry.org | python3 -
+ENV PATH="$POETRY_HOME/bin:$PATH"
 
-# Creating a virtual environment just for poetry and install it with pip
-RUN python3 -m venv $POETRY_VENV \
-    && $POETRY_VENV/bin/pip install -U pip setuptools \
-    && $POETRY_VENV/bin/pip install poetry==${POETRY_VERSION}
+WORKDIR /app
 
-# Create a new stage from the base python image
-FROM python-base as sentinel-app
+# Copy only the dependency files first
+COPY pyproject.toml poetry.lock* ./
 
-# Copy Poetry to app image
-COPY --from=poetry-base ${POETRY_VENV} ${POETRY_VENV}
+# Install dependencies only
+RUN poetry install --no-root --without dev
 
-# Add Poetry to PATH
-ENV PATH="${PATH}:${POETRY_VENV}/bin"
-
-WORKDIR /sentinel-app
-
-# Copy Dependencies
-COPY poetry.lock pyproject.toml ./
-
-# [OPTIONAL] Validate the project is properly configured
-# RUN poetry check
-
-# Install Dependencies
-RUN poetry install --no-interaction --no-cache --without dev
-
-# Copy Application
+# Copy the rest of the application
 COPY . .
 
+# Ensure storage directories exist
 RUN mkdir -p static/sessions static/cars
 
 EXPOSE 8000
