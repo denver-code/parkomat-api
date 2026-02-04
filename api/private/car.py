@@ -41,7 +41,7 @@ async def create_car(
         with Image.open(BytesIO(content)) as img:
             # Convert to RGB (required for PNG to JPG conversion)
             rgb_img = img.convert("RGB")
-            rgb_img.save(file_path, "JPEG", quality=45)
+            rgb_img.save(file_path, "JPEG", quality=20)
     except Exception:
         # If image processing fails, you might want to delete the DB record
         await car.delete()

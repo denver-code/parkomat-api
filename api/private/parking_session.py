@@ -94,7 +94,7 @@ async def create_parking_session(
         content = await photo.read()
         with Image.open(BytesIO(content)) as img:
             rgb_img = img.convert("RGB")
-            rgb_img.save(file_path, "JPEG", quality=45)
+            rgb_img.save(file_path, "JPEG", quality=20)
     except Exception:
         await session.delete()
         raise HTTPException(status_code=400, detail="Failed to process proof photo")
