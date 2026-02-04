@@ -14,7 +14,14 @@ async def schedule_reminders(
     This function lives in the background and waits for the specific
     milestones (20m, 10m, 0m) to trigger Telegram alerts.
     """
-    intervals = [20, 10, 0]
+    now = datetime.now(timezone.utc)
+    total_duration_mins = (end_time - now).total_seconds() / 60
+    if total_duration_mins >= 30:
+        intervals = [20, 10, 0]
+    elif total_duration_mins >= 15:
+        intervals = [10, 5, 0]
+    else:
+        intervals = [int(total_duration_mins * 0.5), int(total_duration_mins * 0.2), 0]
 
     for minutes_left in intervals:
         now = datetime.now(timezone.utc)
