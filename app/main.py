@@ -21,6 +21,7 @@ from models.models import (
     OTPActivationModel,
     ParkingLocation,
     ParkingSession,
+    ParkingSessionStatus,
     PasswordResetToken,
     User,
     UserParkingLocation,
@@ -64,7 +65,7 @@ async def lifespan(app: FastAPI):
     )
 
     active_sessions = await ParkingSession.find(
-        ParkingSession.status == "ACTIVE"
+        ParkingSession.status == ParkingSessionStatus.ACTIVE
     ).to_list()
 
     for session in active_sessions:
