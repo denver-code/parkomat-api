@@ -7,6 +7,9 @@ from models.models import Car, ParkingLocation, ParkingSession, ParkingSessionSt
 
 
 async def schedule_reminders(user_chat_id: str, end_time: datetime, session_id: str):
+    if end_time.tzinfo is None:
+        end_time = end_time.replace(tzinfo=timezone.utc)
+
     now = datetime.now(timezone.utc)
     total_duration = (end_time - now).total_seconds() / 60
 
