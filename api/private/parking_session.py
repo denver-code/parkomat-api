@@ -82,9 +82,16 @@ async def create_parking_session(
         if parking_location_id:
             parking_location = await ParkingLocation.get(parking_location_id)
 
+        duration = 0
+        location = await ParkingLocation.get(PydanticObjectId(parking_location_id))
+        if location:
+            duration = location.max_stay if location.max_stay else 1440
+        else:
+            duration = manual_max_stay_mins
+
         await send_telegram_msg(
             user.telegram_chat_id,
-            f"Your parking session {f'at {parking_location.name} ' if parking_location else ''}for {car.license_plate} that lasts {manual_max_stay_mins} minutes has started.",
+            f"Your parking session at '{parking_location.location_name if parking_location else 'Unknown'}' for {car.license_plate} that lasts {duration} minutes has started.",
         )
 
     filename = f"{user.id}-{session.id}.jpg"
