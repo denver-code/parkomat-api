@@ -218,8 +218,8 @@ async def signin_event(
         value=jwt_token,
         httponly=True,
         domain=".ihorsavenko.com" if is_prod else None,
-        samesite="none" if is_prod else None,
-        secure=True if is_prod else False,
+        samesite="none" if is_prod else "lax",
+        secure=is_prod,
         path="/",
     )
 
