@@ -110,6 +110,7 @@ class ParkingSession(Document):
     }
     # Calculated automatically based on the parking location's fee classification and max stay
     end_time: datetime
+    actual_end_time: Optional[datetime] = None
     status: ParkingSessionStatus = ParkingSessionStatus.ACTIVE
 
     created_at: datetime = Field(default_factory=datetime.utcnow)

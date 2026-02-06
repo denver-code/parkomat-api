@@ -168,6 +168,7 @@ async def get_session(session_id: str, user=Depends(FastJWT().login_required)):
         "status": session.status,
         "start_time": session.start_time,
         "end_time": session.end_time,
+        "actual_end_time": session.actual_end_time,
         "photo_url": photo_url,
         "car": {
             "license_plate": car.license_plate if car else "Unknown",
@@ -191,5 +192,6 @@ async def complete_session(session_id: str, user=Depends(FastJWT().login_require
         raise HTTPException(status_code=404, detail="Session not found")
 
     session.status = ParkingSessionStatus.COMPLETED
+    session.actual_end_time = datetime.now(timezone.utc)
     await session.save()
     return {"status": "completed"}
