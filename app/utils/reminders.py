@@ -49,8 +49,12 @@ async def schedule_reminders(user_chat_id: str, end_time: datetime, session_id: 
             else f"⚠️ <b>{minutes_left}m left!</b> at {loc_name} for your {car_plate} car!"
         )
 
-        await send_telegram_msg(user_chat_id, msg)
-        await mark_reminder_sent(session_id, minutes_left)
+        try:
+            await send_telegram_msg(user_chat_id, msg)
+            await mark_reminder_sent(session_id, minutes_left)
+        except Exception as e:
+            print(f"Failed to send telegram message: {e}")
+            # Continue execution to ensure session closes if needed
 
         if minutes_left == 0:
             session.status = ParkingSessionStatus.COMPLETED

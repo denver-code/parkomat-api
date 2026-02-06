@@ -147,6 +147,43 @@ async def get_sessions(
     return await query.to_list()
 
 
+@session_router.get("/{session_id}")
+async def get_session(session_id: str, user=Depends(FastJWT().login_required)):
+    session = await ParkingSession.get(PydanticObjectId(session_id))
+    if not session or session.user_id != user.id:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    car = await Car.get(session.car_id)
+    location = (
+        await ParkingLocation.get(session.parking_location_id)
+        if session.parking_location_id
+        else None
+    )
+
+    filename = f"{user.id}-{session.id}.jpg"
+    photo_url = f"{config.API_BASE_URL}/api/static/sessions/{filename}"
+
+    return {
+        "id": str(session.id),
+        "status": session.status,
+        "start_time": session.start_time,
+        "end_time": session.end_time,
+        "photo_url": photo_url,
+        "car": {
+            "license_plate": car.license_plate if car else "Unknown",
+            "id": str(car.id) if car else None,
+        },
+        "location": {
+            "name": location.location_name if location else "Manual Location",
+            "id": str(location.id) if location else None,
+            "coords": session.car_location["coordinates"] if session.car_location else None,
+        },
+        "manual_max_stay_mins": (session.end_time - session.start_time).total_seconds() / 60
+        if not location
+        else None,
+    }
+
+
 @session_router.post("/{session_id}/complete")
 async def complete_session(session_id: str, user=Depends(FastJWT().login_required)):
     session = await ParkingSession.get(PydanticObjectId(session_id))
