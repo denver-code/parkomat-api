@@ -41,7 +41,7 @@ async def create_parking_session(
     if not car:
         raise HTTPException(status_code=404, detail="Car not found in your garage")
 
-    start_time = datetime.now(timezone.utc)
+    start_time = datetime.now()
     calculated_end_time = None
 
     if parking_location_id:
@@ -192,6 +192,6 @@ async def complete_session(session_id: str, user=Depends(FastJWT().login_require
         raise HTTPException(status_code=404, detail="Session not found")
 
     session.status = ParkingSessionStatus.COMPLETED
-    session.actual_end_time = datetime.now(timezone.utc)
+    session.actual_end_time = datetime.now()
     await session.save()
     return {"status": "completed"}
