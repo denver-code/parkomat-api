@@ -1,7 +1,7 @@
 import asyncio
 import os
 from contextlib import asynccontextmanager
-
+from datetime import datetime
 import sentry_sdk
 from beanie import init_beanie
 from fastapi import FastAPI
@@ -147,3 +147,8 @@ async def telegram_webhook(update: dict):
             )
 
     return {"ok": True}
+
+
+@app.get("/time")
+async def get_time():
+    return {"time": datetime.now().isoformat()}

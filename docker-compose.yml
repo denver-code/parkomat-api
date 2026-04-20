@@ -7,7 +7,7 @@ services:
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -49,6 +49,7 @@ services:
       FLAGSMITH_TOKEN: ${FLAGSMITH_TOKEN}
       REDIS_HOST: ${REDIS_HOST}
       REDIS_PORT: ${REDIS_PORT}
+      TZ: Europe/London
 
 volumes:
   api_data:
