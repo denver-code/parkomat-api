@@ -221,6 +221,7 @@ async def signin_event(
         samesite="none" if is_prod else "lax",
         secure=is_prod,
         path="/",
+        max_age=60 * 60 * 24 * 120, # 120 days
     )
 
     if user.notification_settings and user.notification_settings.email_on_signin:

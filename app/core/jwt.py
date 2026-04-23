@@ -22,7 +22,7 @@ class FastJWT:
         self,
         *,
         data: dict,
-        expires_in_days: int = 30,
+        expires_in_days: int = 120,
     ) -> str:
         return self._encode(
             data=data,
